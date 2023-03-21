@@ -346,14 +346,14 @@ class _ChatItemViewState extends State<ChatItemView> {
   var _isHintMsg = false;
 
   var _hintTextStyle = TextStyle(
-    color: Color(0xFF999999),
+    color: Color.fromRGBO(153, 153, 153, 1),
     fontSize: 12.sp,
   );
 
   @override
   void dispose() {
     _popupCtrl.dispose();
-    _keyboardSubs.cancel();
+    //_keyboardSubs.cancel();
     _closeMenuSubs?.cancel();
     super.dispose();
   }
@@ -362,10 +362,10 @@ class _ChatItemViewState extends State<ChatItemView> {
   void initState() {
     var keyboardVisibilityCtrl = KeyboardVisibilityController();
     // Query
-    print(
-        'Keyboard visibility direct query: ${keyboardVisibilityCtrl.isVisible}');
+    // print('Keyboard visibility direct query: ${keyboardVisibilityCtrl.isVisible}');
 
     // Subscribe
+    /*
     _keyboardSubs = keyboardVisibilityCtrl.onChange.listen((bool visible) {
       print('Keyboard visibility update. Is visible: $visible');
       _popupCtrl.hideMenu();
@@ -379,7 +379,7 @@ class _ChatItemViewState extends State<ChatItemView> {
       if (value == true) {
         _popupCtrl.hideMenu();
       }
-    });
+    });*/
     super.initState();
   }
 
@@ -402,9 +402,9 @@ class _ChatItemViewState extends State<ChatItemView> {
       child: Container(
         padding: widget.padding ??
             EdgeInsets.fromLTRB(
-              widget.multiSelMode && !_isHintMsg ? 0 : 22.w,
+              widget.multiSelMode && !_isHintMsg ? 0 : 16.w,
               0,
-              22.w,
+              16.w,
               _isHintMsg ? 5.h : 15.h,
             ),
         margin: widget.margin,
@@ -638,11 +638,17 @@ class _ChatItemViewState extends State<ChatItemView> {
           {
             _isHintMsg = true;
             var text = _parseHintText();
+            if (widget.message.contentType ==
+                MessageType.friendAddedNotification) {
+              text = "你们已经成为好友，现在可以开始聊天了";
+            }
             if (null == text) _isHintMsg = false;
             child = _buildCommonItemView(
+              hideUnread: true,
               isBubbleBg: null == text,
               isHintMsg: null != text,
               child: ChatAtText(
+                width: double.infinity,
                 text: text ?? UILocalizations.unsupportedMessage,
                 textAlign: null != text ? TextAlign.center : TextAlign.left,
                 textStyle: null != text
@@ -671,6 +677,7 @@ class _ChatItemViewState extends State<ChatItemView> {
     required Widget child,
     bool isBubbleBg = true,
     bool isHintMsg = false,
+    bool hideUnread = false,
   }) =>
       ChatSingleLayout(
         child: child,
@@ -683,10 +690,11 @@ class _ChatItemViewState extends State<ChatItemView> {
         popupCtrl: _popupCtrl,
         isReceivedMsg: _isFromMsg,
         isSingleChat: widget.isSingleChat,
-        avatarSize: widget.avatarSize ?? 42.h,
+        avatarSize: widget.avatarSize ?? 42.w,
         rightAvatar: widget.rightAvatarUrl ?? OpenIM.iMManager.uInfo.faceURL,
         leftAvatar: widget.leftAvatarUrl ?? widget.message.senderFaceUrl,
         leftName: widget.leftName ?? widget.message.senderNickname ?? '',
+        hideUnread: hideUnread,
         isUnread: !widget.message.isRead!,
         leftBubbleColor: widget.leftBubbleColor,
         rightBubbleColor: widget.rightBubbleColor,

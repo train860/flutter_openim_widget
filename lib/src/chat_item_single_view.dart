@@ -49,6 +49,7 @@ class ChatSingleLayout extends StatelessWidget {
   final bool haveUsableMenu;
   final bool showLongPressMenu;
   final bool isVoiceMessage;
+  final bool hideUnread;
 
   const ChatSingleLayout({
     Key? key,
@@ -66,6 +67,7 @@ class ChatSingleLayout extends StatelessWidget {
     required this.leftName,
     this.avatarSize = 42.0,
     this.isUnread,
+    this.hideUnread = false,
     this.leftBubbleColor = const Color(0xFFF0F0F0),
     this.rightBubbleColor = const Color(0xFFDCEBFE),
     this.onLongPressRightAvatar,
@@ -132,7 +134,7 @@ class ChatSingleLayout extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             if (quoteView != null) _buildQuoteMsgView(),
-                            ..._getReadStatusView(),
+                            if (!hideUnread) ..._getReadStatusView(),
                           ],
                         ),
                       ],

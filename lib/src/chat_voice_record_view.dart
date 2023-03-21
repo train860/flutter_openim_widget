@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_openim_widget/flutter_openim_widget.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -37,29 +39,35 @@ class ChatRecordVoiceView extends StatelessWidget {
           ),
           Positioned(
             top: 360.h,
-            left: 29.w,
+            left: 0,
+            width: 375.w,
             child: _selectedCancelAreaAnimationView(),
           ),
           Positioned(
-            top: 576.h,
-            left: 35.w,
+            top: 536.h,
+            left: 15.w,
+            width: 375.w,
             child: _unselectedCancelAreaView(),
           ),
           Positioned(
-            top: 563.h,
-            left: 30.w,
+            top: 523.h,
+            left: 15.w,
+            width: 375.w,
             child: _selectedCancelAreaView(),
           ),
+          /*
           Positioned(
             top: 576.h,
             right: 35.w,
             child: _unselectedSoundToWordAreaView(),
           ),
+
           Positioned(
             top: 563.h,
             right: 30.w,
             child: _selectedSoundToWordAreaView(),
           ),
+         
           Positioned(
             top: 563.h,
             right: 30.w,
@@ -80,7 +88,7 @@ class ChatRecordVoiceView extends StatelessWidget {
             left: 0,
             width: 375.w,
             child: _selectedPressAreaReleaseText(),
-          ),
+          ),*/
           Align(
             alignment: Alignment.bottomCenter,
             child: _bottomBg(),
@@ -323,23 +331,28 @@ class ChatRecordVoiceView extends StatelessWidget {
 
   Widget _selectedCancelAreaView() => Visibility(
         visible: selectedCancelArea,
-        child: ImageUtil.assetImage(
-          'ic_voice_record_cancel_white',
-          width: 102.w,
-          height: 102.h,
-        ),
+        child: Transform(
+            // 向右旋转10度
+            transform: Matrix4.rotationZ(15 * pi / 180),
+            child: ImageUtil.assetImage(
+              'ic_voice_record_cancel_white',
+              width: 102.w,
+              height: 102.h,
+            )),
       );
 
   Widget _unselectedCancelAreaView() => Visibility(
-        visible: !selectedCancelArea &&
-            !showSpeechRecognizing &&
-            !showRecognizeFailed,
+      visible:
+          !selectedCancelArea && !showSpeechRecognizing && !showRecognizeFailed,
+      child: Transform(
+        // 向右旋转10度
+        transform: Matrix4.rotationZ(15 * pi / 180),
         child: ImageUtil.assetImage(
           'ic_voice_record_cancel_grey',
           width: 82.w,
           height: 82.h,
         ),
-      );
+      ));
 
   Widget _selectedCancelAreaAnimationView() => Visibility(
         visible: selectedCancelArea,

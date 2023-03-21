@@ -78,7 +78,7 @@ class _ChatVideoPlayerViewState extends State<ChatVideoPlayerView> {
     await widget.dio?.download(
       widget.url!,
       savePath,
-      options: Options(receiveTimeout: 120 * 1000),
+      options: Options(receiveTimeout: Duration(minutes: 2)),
     );
     widget.onDownloadFinished?.call(widget.url!, savePath);
   }

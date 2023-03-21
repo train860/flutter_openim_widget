@@ -39,7 +39,7 @@ dependencies:
   video_player: ^2.4.7
   flutter_cache_manager: ^3.3.0
   mime_type: ^1.0.0
-  dio: ^4.0.6
+  dio: ^5.0.1
   flutter_keyboard_visibility: ^5.3.0
   emoji_picker_flutter: ^1.4.0
   should_rebuild: ^1.0.1
@@ -49,6 +49,7 @@ dependencies:
     git:
       url: https://github.com/OpenIMSDK/Open-IM-SDK-Flutter.git
       ref: 2.3.5+3
+  tencent_keyboard_visibility: ^1.0.1
 
 
 

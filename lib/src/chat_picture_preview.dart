@@ -255,7 +255,7 @@ class ChatPicturePreview extends StatelessWidget {
     await dio?.download(
       picList.elementAt(index).url!,
       savePath,
-      options: Options(receiveTimeout: 10 * 60 * 1000),
+      options: Options(receiveTimeout: Duration(minutes: 10)),
     );
     onDownloadFinished?.call(url, savePath);
   }

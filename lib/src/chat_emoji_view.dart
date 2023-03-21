@@ -56,29 +56,24 @@ class _ChatEmojiViewState extends State<ChatEmojiView> {
 
   @override
   Widget build(BuildContext context) {
-    return FadeInUp(
-      duration: Duration(milliseconds: 200),
-      child: Container(
-        // height: 190.h,
-        color: Colors.white,
-        child: Column(
-          children: [
-            IndexedStack(
-              index: _index,
-              children: [
-                widget.customEmojiLayout ??
-                    ShouldRebuild<EmojiLayout>(
-                      shouldRebuild: (oldWidget, newWidget) => false,
-                      child: EmojiLayout(
-                        controller: widget.textEditingController,
-                      ),
+    return Container(
+      child: Column(
+        children: [
+          IndexedStack(
+            index: _index,
+            children: [
+              widget.customEmojiLayout ??
+                  ShouldRebuild<EmojiLayout>(
+                    shouldRebuild: (oldWidget, newWidget) => false,
+                    child: EmojiLayout(
+                      controller: widget.textEditingController,
                     ),
-                _buildFavoriteLayout(),
-              ],
-            ),
-            _buildTabView(),
-          ],
-        ),
+                  ),
+              _buildFavoriteLayout(),
+            ],
+          ),
+          _buildTabView(),
+        ],
       ),
     );
   }

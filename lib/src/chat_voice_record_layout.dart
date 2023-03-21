@@ -70,9 +70,10 @@ class _ChatVoiceRecordLayoutState extends State<ChatVoiceRecordLayout> {
           Offset global = details.globalPosition;
           setState(() {
             _selectedPressArea = global.dy >= 683.h;
-            _selectedCancelArea = /*global.dy >= 563.h &&*/
-                global.dy < 683.h && global.dx < 172.w;
-            _selectedSoundToWordArea = global.dy < 683.h && global.dx >= 172.w;
+            _selectedCancelArea = global.dy < 683.h;
+            //_selectedCancelArea = /*global.dy >= 563.h &&*/
+            //    global.dy < 683.h && global.dx < 172.w;
+            //_selectedSoundToWordArea = global.dy < 683.h && global.dx >= 172.w;
           });
         },
         onLongPressEnd: (details) async {

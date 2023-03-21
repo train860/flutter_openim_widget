@@ -1,10 +1,14 @@
+import 'dart:io';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_openim_widget/flutter_openim_widget.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:tencent_keyboard_visibility/tencent_keyboard_visibility.dart';
 
-double kVoiceRecordBarHeight = 44.h;
+double kVoiceRecordBarHeight = 40.h;
 
 class ChatInputBoxView extends StatefulWidget {
   ChatInputBoxView({
@@ -44,6 +48,7 @@ class ChatInputBoxView extends StatefulWidget {
     this.enabledToolboxButton = true,
     this.enabledVoiceButton = false,
   }) : super(key: key);
+
   final AtTextCallback? atCallback;
   final Map<String, String> allAtMap;
   final TextEditingController? controller;
@@ -80,35 +85,24 @@ class ChatInputBoxView extends StatefulWidget {
   final bool enabledToolboxButton;
 
   @override
-  _ChatInputBoxViewState createState() => _ChatInputBoxViewState();
+  ChatInputBoxViewState createState() => ChatInputBoxViewState();
 }
 
-class _ChatInputBoxViewState extends State<ChatInputBoxView>
-    with TickerProviderStateMixin {
+class ChatInputBoxViewState extends State<ChatInputBoxView>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
+  var _keyboardVisible = false;
   var _toolsVisible = false;
   var _emojiVisible = false;
   var _leftKeyboardButton = false;
   var _rightKeyboardButton = false;
-  late AnimationController _controller;
-  late Animation<double> _animation;
+  double _keyboardHeight = 0;
+  double bottomPadding = 0;
 
+  late AnimationController animationCtl;
+  List<Animation<double>> animations = [];
   @override
   void initState() {
-    _controller = AnimationController(
-      duration: Duration(milliseconds: 200),
-      vsync: this,
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          // controller.reverse();
-        } else if (status == AnimationStatus.dismissed) {
-          // controller.forward();
-        }
-      });
-
-    _animation = Tween(begin: 1.0, end: 0.0).animate(_controller)
-      ..addListener(() {
-        setState(() {});
-      });
+    initAnimation();
 
     widget.focusNode?.addListener(() {
       if (widget.focusNode!.hasFocus) {
@@ -128,21 +122,66 @@ class _ChatInputBoxViewState extends State<ChatInputBoxView>
         _emojiVisible = false;
       });
     });
-
-    widget.controller?.addListener(() {
-      if (widget.controller!.text.isEmpty) {
-        _controller.reverse();
-      } else {
-        _controller.forward();
-      }
-    });
-
     super.initState();
+  }
+
+  void initAnimation() {
+    animationCtl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    animations = [
+      Tween<double>(begin: 0, end: 346).animate(
+          CurvedAnimation(curve: Curves.easeInOutSine, parent: animationCtl))
+    ];
+  }
+
+  keyboardDown() {
+    if (widget.focusNode != null && widget.focusNode!.hasFocus) {
+      widget.focusNode?.unfocus();
+      animationCtl.reverse();
+    }
+  }
+
+  double _getBottomHeight() {
+    if (_keyboardVisible) {
+      final currentKeyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
+      if (currentKeyboardHeight != 0) {
+        if (currentKeyboardHeight >= _keyboardHeight) {
+          _keyboardHeight = currentKeyboardHeight;
+        }
+      }
+      final height =
+          _keyboardHeight != 0 ? _keyboardHeight : currentKeyboardHeight;
+      return height;
+    } else if (_toolsVisible) {
+      return 360 + (bottomPadding);
+    } else if (_emojiVisible) {
+      return 360 + (bottomPadding);
+    } else if (widget.controller!.text.length >= 46 &&
+        _keyboardVisible == false) {
+      return 25 + (bottomPadding);
+    } else {
+      return bottomPadding;
+    }
+  }
+
+  hideAllPanel() {
+    unfocus();
+    if (_keyboardVisible != false ||
+        _toolsVisible != false ||
+        _emojiVisible != false) {
+      setState(() {
+        _keyboardVisible = false;
+        _toolsVisible = false;
+        _emojiVisible = false;
+      });
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
     widget.controller?.dispose();
     widget.focusNode?.dispose();
     super.dispose();
@@ -150,6 +189,12 @@ class _ChatInputBoxViewState extends State<ChatInputBoxView>
 
   @override
   Widget build(BuildContext context) {
+    final MediaQueryData data = MediaQuery.of(context);
+    EdgeInsets padding = data.padding;
+    if (bottomPadding == 0 || padding.bottom > bottomPadding) {
+      bottomPadding = padding.bottom;
+    }
+
     return widget.multiMode
         ? widget.multiOpToolbox
         : _buildMsgInputField(context: context);
@@ -181,17 +226,12 @@ class _ChatInputBoxViewState extends State<ChatInputBoxView>
   Widget _buildMsgInputField({required BuildContext context}) => Column(
         children: [
           Container(
-            padding: EdgeInsets.symmetric(vertical: 12.h),
+            padding: EdgeInsets.symmetric(vertical: 8.h),
+            //height: 64.h,
             decoration: BoxDecoration(
-              color: widget.background ?? Color(0xFFE8F2FF),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0xFF000000).withOpacity(0.12),
-                  offset: Offset(0, -1),
-                  blurRadius: 4,
-                  spreadRadius: 0,
-                ),
-              ],
+              color: widget.background ?? Color(0xfff9f9f9),
+              border:
+                  Border(top: BorderSide(width: 0.5, color: Color(0xffe5e5e5))),
             ),
             child: Column(
               children: [
@@ -205,7 +245,15 @@ class _ChatInputBoxViewState extends State<ChatInputBoxView>
                           Offstage(
                             child: Column(
                               children: [
-                                _buildTextFiled(),
+                                KeyboardVisibility(
+                                    child: _buildTextFiled(),
+                                    onChanged: (bool visibility) {
+                                      if (_keyboardVisible != visibility) {
+                                        setState(() {
+                                          _keyboardVisible = visibility;
+                                        });
+                                      }
+                                    }),
                                 if (widget.quoteContent != null &&
                                     "" != widget.quoteContent)
                                   _quoteView(),
@@ -225,56 +273,38 @@ class _ChatInputBoxViewState extends State<ChatInputBoxView>
                       _rightKeyboardButton ? _keyboardRightBtn() : _emojiBtn(),
                     if (widget.showToolsButton) _toolsBtn(),
                     spaceView,
+                    /*
                     Visibility(
                       visible: !_leftKeyboardButton || !_rightKeyboardButton,
                       child: Container(
                         width: 60.0.w * (1.0 - _animation.value),
                         child: _buildSendButton(),
                       ),
-                    ),
+                    ),*/
                   ],
                 ),
               ],
             ),
           ),
-          Visibility(
-            visible: _toolsVisible,
-            child: widget.toolbox,
-          ),
-          Visibility(
-            visible: _emojiVisible,
-            child: widget.emojiView,
+          AnimatedSize(
+            duration: Duration(
+                milliseconds:
+                    (_keyboardVisible && Platform.isAndroid) ? 200 : 340),
+            curve: Curves.fastOutSlowIn,
+            child: Builder(builder: (context) {
+              if (_emojiVisible) {
+                return widget.emojiView;
+              } else if (_toolsVisible) {
+                return widget.toolbox;
+              } else {
+                return Container(
+                  height: max(_getBottomHeight(), 0.0),
+                  color: Color(0xfff8f8f8),
+                );
+              }
+            }),
           ),
         ],
-      );
-
-  Widget _buildSendButton() => GestureDetector(
-        onTap: () {
-          if (!_emojiVisible) focus();
-          if (null != widget.onSubmitted && null != widget.controller) {
-            widget.onSubmitted!(widget.controller!.text.toString());
-          }
-        },
-        child: Container(
-          height: 33.h,
-          width: 60.w,
-          // padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-          alignment: Alignment.center,
-          margin: EdgeInsets.only(right: 10.w),
-          decoration: BoxDecoration(
-            color: widget.buttonColor ?? const Color(0xFF1B72EC),
-            borderRadius: BorderRadius.circular(widget.buttonRadius ?? 4),
-          ),
-          child: Text(
-            UILocalizations.send,
-            maxLines: 1,
-            style: widget.buttonTextStyle ??
-                TextStyle(
-                  fontSize: 14.sp,
-                  color: Color(0xFFFFFFFF),
-                ),
-          ),
-        ),
       );
 
   Widget _quoteView() => GestureDetector(
@@ -325,10 +355,17 @@ class _ChatInputBoxViewState extends State<ChatInputBoxView>
               controller: widget.controller,
               enabled: !_isMuted,
               inputFormatters: widget.inputFormatters,
-              // onSubmitted: (value) {
-              //   focus();
-              //   if (null != widget.onSubmitted) widget.onSubmitted!(value);
-              // },
+              onSubmitted: (value) {
+                //禁止键盘收起. 不再需要
+                //if (!_emojiVisible) focus();
+
+                if (null != widget.onSubmitted && null != widget.controller) {
+                  widget.onSubmitted!(widget.controller!.text.toString());
+                }
+              },
+              onTap: () {
+                animationCtl.forward();
+              },
             ),
             Visibility(
               visible: _isMuted,
@@ -430,6 +467,7 @@ class _ChatInputBoxViewState extends State<ChatInputBoxView>
             ? null
             : () {
                 setState(() {
+                  _keyboardVisible = false;
                   _toolsVisible = !_toolsVisible;
                   _emojiVisible = false;
                   _leftKeyboardButton = false;
@@ -457,6 +495,7 @@ class _ChatInputBoxViewState extends State<ChatInputBoxView>
                   _leftKeyboardButton = false;
                   _emojiVisible = true;
                   _toolsVisible = false;
+                  _keyboardVisible = false;
                   unfocus();
                 });
               },
@@ -476,109 +515,3 @@ class _ChatInputBoxViewState extends State<ChatInputBoxView>
         ),
       );
 }
-
-/*class ChatInputBoxView extends StatelessWidget {
-  final AtTextCallback? atCallback;
-  final Map<String, String> allAtMap;
-  final FocusNode? focusNode;
-  final TextEditingController? controller;
-  final ValueChanged<String>? onSubmitted;
-  final Widget tools;
-  final Widget? speakBtn;
-  final Widget? keyboardBtn;
-  final Widget? toolsBtn;
-  final bool toolsVisible;
-  final TextStyle? style;
-  final Widget? quoteWidget;
-
-  ChatInputBoxView({
-    Key? key,
-    required this.tools,
-    this.allAtMap = const <String, String>{},
-    this.atCallback,
-    this.focusNode,
-    this.controller,
-    this.onSubmitted,
-    this.toolsVisible = false,
-    this.speakBtn,
-    this.keyboardBtn,
-    this.toolsBtn,
-    this.style,
-    this.quoteWidget,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    if (toolsVisible) {
-      unfocus(context: context);
-    }
-    return _buildMsgInputField(context: context);
-  }
-
-  focus({required BuildContext context}) =>
-      FocusScope.of(context).requestFocus(focusNode);
-
-  unfocus({required BuildContext context}) =>
-      FocusScope.of(context).requestFocus(FocusNode());
-
-  Widget _buildMsgInputField({required BuildContext context}) => Column(
-        children: [
-          Container(
-            padding: EdgeInsets.symmetric(vertical: 12.h),
-            decoration: BoxDecoration(
-              color: Color(0xFFE8F2FF),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0xFF000000).withOpacity(0.12),
-                  offset: Offset(0, -1),
-                  blurRadius: 4,
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (speakBtn != null) speakBtn!,
-                    Flexible(
-                      child: Container(
-                        alignment: Alignment.center,
-                        constraints: BoxConstraints(minHeight: 35.h),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 4.w,
-                          vertical: 4.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFFFFFFF),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: ChatTextField(
-                          style: style,
-                          atCallback: atCallback,
-                          allAtMap: allAtMap,
-                          focusNode: focusNode,
-                          controller: controller,
-                          onSubmitted: (value) {
-                            focus(context: context);
-                            if (null != onSubmitted) onSubmitted!(value);
-                          },
-                        ),
-                      ),
-                    ),
-                    if (null != keyboardBtn && null != toolsBtn)
-                      toolsVisible ? keyboardBtn! : toolsBtn!,
-                  ],
-                ),
-                if (null != quoteWidget) quoteWidget!,
-              ],
-            ),
-          ),
-          Visibility(
-            visible: toolsVisible,
-            child: tools,
-          ),
-        ],
-      );
-}*/

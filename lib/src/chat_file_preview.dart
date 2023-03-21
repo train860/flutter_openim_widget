@@ -49,7 +49,7 @@ class _ChatFilePreviewState extends State<ChatFilePreview> {
     await widget.dio?.download(
       widget.url,
       widget.cachePath,
-      options: Options(receiveTimeout: 10 * 60 * 1000),
+      options: Options(receiveTimeout: Duration(minutes: 10)),
       cancelToken: _cancelToken,
       onReceiveProgress: (int count, int total) {
         if (!mounted) return;

@@ -19,6 +19,7 @@ class ChatAtText extends StatelessWidget {
   final TextAlign textAlign;
   final TextOverflow overflow;
   final int? maxLines;
+  final double? width;
   final double textScaleFactor;
 
   /// all user info
@@ -40,6 +41,7 @@ class ChatAtText extends StatelessWidget {
     this.overflow = TextOverflow.clip,
     this.textStyle,
     this.maxLines,
+    this.width,
     this.textScaleFactor = 1.0,
     this.model = ChatTextModel.match,
     this.onVisibleTrulyText,
@@ -67,7 +69,7 @@ class ChatAtText extends StatelessWidget {
     onVisibleTrulyText?.call(textSpan.toPlainText());
 
     return Container(
-      constraints: BoxConstraints(maxWidth: 0.5.sw),
+      constraints: BoxConstraints(maxWidth: width ?? 0.5.sw),
       child: RichText(
         textAlign: textAlign,
         overflow: overflow,
